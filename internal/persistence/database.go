@@ -292,7 +292,7 @@ func (d *DBStore) RecordMessage(uuid string, tx *sql.Tx, msgHash pb.MessageHash,
 
 	now := time.Now().UnixNano()
 	for _, s := range storenodes {
-		_, err := stmt.Exec(uuid, d.fleetName, d.clusterID, topic, msgHash.String(), s, status, now)
+		_, err := stmt.Exec(uuid, d.fleetName, d.clusterID, topic, msgHash.String(), s.String(), status, now)
 		if err != nil {
 			return err
 		}
@@ -317,7 +317,7 @@ func (d *DBStore) MarkMessagesAsFound(peerID peer.ID, messageHashes []pb.Message
 
 	args := []interface{}{d.fleetName, d.clusterID}
 	for _, messageHash := range messageHashes {
-		args = append(args, messageHash)
+		args = append(args, messageHash.String())
 	}
 
 	_, err := d.db.Exec(query, args...)
@@ -326,7 +326,7 @@ func (d *DBStore) MarkMessagesAsFound(peerID peer.ID, messageHashes []pb.Message
 }
 
 func (d *DBStore) RecordStorenodeUnavailable(uuid string, storenode peer.ID) error {
-	_, err := d.db.Exec("INSERT INTO storeNodeUnavailable(runId, fleet, storenode, requestTime) VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING", uuid, d.fleetName, storenode, time.Now().UnixNano())
+	_, err := d.db.Exec("INSERT INTO storeNodeUnavailable(runId, fleet, storenode, requestTime) VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING", uuid, d.fleetName, storenode.String(), time.Now().UnixNano())
 	return err
 }
 
