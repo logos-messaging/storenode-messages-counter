@@ -124,6 +124,7 @@ func Execute(ctx context.Context, options Options) error {
 		node.WithLogLevel(lvl),
 		node.WithNTP(),
 		node.WithClusterID(uint16(options.ClusterID)),
+		node.WithPubSubTopics(options.PubSubTopics.Value()),
 		node.WithHostAddress(hostAddr),
 		node.WithWakuStoreRateLimit(7),
 	)
