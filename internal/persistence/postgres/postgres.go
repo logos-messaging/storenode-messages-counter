@@ -4,7 +4,7 @@ import (
 	"database/sql"
 
 	"github.com/golang-migrate/migrate/v4/database"
-	"github.com/golang-migrate/migrate/v4/database/pgx"
+	"github.com/golang-migrate/migrate/v4/database/pgx/v5"
 	_ "github.com/jackc/pgx/v5/stdlib" // Blank import to register the postgres driver
 	"github.com/waku-org/storenode-messages/internal/persistence/migrate"
 	"github.com/waku-org/storenode-messages/internal/persistence/postgres/migrations"

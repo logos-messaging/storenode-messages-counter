@@ -1,22 +1,32 @@
-FROM golang:1.21 as builder
+FROM golang:1.26-trixie AS builder
 
-RUN mkdir -p /go/src/github.com/waku-org/storenode-messages
+WORKDIR /src
 
-WORKDIR /go/src/github.com/waku-org/storenode-messages
+# Cache module downloads separately from source changes
+COPY go.mod go.sum ./
+RUN go mod download
 
-ADD . .
-
+COPY . .
 RUN make
 
-# Copy the binary to the second image
-FROM debian:12.5-slim
+FROM debian:13-slim
+
+ARG commit=unknown
 
 LABEL maintainer="richard@status.im"
-LABEL source="https://github.com/waku-org/storenode-messages"
+LABEL source="https://github.com/logos-messaging/storenode-messages-counter"
 LABEL description="Storenode message count verifier"
-LABEL commit="unknown"
+LABEL commit="${commit}"
 
-COPY --from=builder /go/src/github.com/waku-org/storenode-messages/build/storemsgcounter /usr/local/bin/storemsgcounter
+RUN apt-get update \
+ && apt-get upgrade -y \
+ && apt-get install -y --no-install-recommends ca-certificates \
+ && rm -rf /var/lib/apt/lists/* \
+ && useradd --system --uid 10001 --no-create-home --shell /usr/sbin/nologin storemsgcounter
+
+COPY --from=builder /src/build/storemsgcounter /usr/local/bin/storemsgcounter
+
+USER storemsgcounter
 
 ENTRYPOINT ["/usr/local/bin/storemsgcounter"]
 CMD ["-help"]

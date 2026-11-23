@@ -124,6 +124,7 @@ func Execute(ctx context.Context, options Options) error {
 		node.WithLogLevel(lvl),
 		node.WithNTP(),
 		node.WithClusterID(uint16(options.ClusterID)),
+		node.WithPubSubTopics(options.PubSubTopics.Value()),
 		node.WithHostAddress(hostAddr),
 		node.WithWakuStoreRateLimit(7),
 	)
@@ -347,7 +348,7 @@ func (app *Application) verifyHistory(ctx context.Context, runId string, storeno
 		go func(peerID peer.ID, messageHashes []pb.MessageHash) {
 			defer wg.Done()
 
-			onResult := func(result *store.Result) {
+			onResult := func(result store.Result) {
 				msgMapLock.Lock()
 				for _, mkv := range result.Messages() {
 					hash := mkv.WakuMessageHash()
@@ -455,7 +456,7 @@ func (app *Application) checkMissingMessageStatus(ctx context.Context, storenode
 			defer wg.Done()
 
 			foundMissingMessages := make(map[pb.MessageHash]struct{})
-			app.verifyMessageExistence(ctx, runId, peerID, messageHashes, func(result *store.Result) {
+			app.verifyMessageExistence(ctx, runId, peerID, messageHashes, func(result store.Result) {
 				for _, mkv := range result.Messages() {
 					foundMissingMessages[mkv.WakuMessageHash()] = struct{}{}
 				}
@@ -514,7 +515,7 @@ func (app *Application) countMissingMessages(storenodes []peer.ID) error {
 }
 
 func (app *Application) fetchStoreNodeMessages(ctx context.Context, runId string, storenodeID peer.ID, topic string, startTime time.Time, endTime time.Time, logger *zap.Logger) {
-	var result *store.Result
+	var result store.Result
 	var err error
 
 	queryLogger := logger.With(zap.Stringer("storenode", storenodeID), zap.Int64("startTime", startTime.UnixNano()), zap.Int64("endTime", endTime.UnixNano()))
@@ -635,7 +636,7 @@ func (app *Application) retrieveHistory(ctx context.Context, runId string, store
 
 }
 
-func (app *Application) verifyMessageExistence(ctx context.Context, runId string, peerID peer.ID, messageHashes []pb.MessageHash, onResult func(result *store.Result), logger *zap.Logger) {
+func (app *Application) verifyMessageExistence(ctx context.Context, runId string, peerID peer.ID, messageHashes []pb.MessageHash, onResult func(result store.Result), logger *zap.Logger) {
 	if len(messageHashes) == 0 {
 		return
 	}
@@ -656,7 +657,7 @@ func (app *Application) verifyMessageExistence(ctx context.Context, runId string
 		go func(messageHashes []pb.MessageHash) {
 			defer wg.Done()
 
-			var result *store.Result
+			var result store.Result
 			var err error
 
 			retry := true
